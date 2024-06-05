@@ -1,7 +1,6 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Point;
 use sdl2::rect::Rect;
 
 mod view;
@@ -34,10 +33,15 @@ fn main() -> Result<(), String> {
         clear_color: (clear_color),
     };
 
-    let mut player: player::Player = player::Player { x: 200, y: 200 };
+    let mut player: player::Player = player::Player {
+        x: 200.0,
+        y: 200.0,
+        a: 0.0,
+        dx: 0.0,
+        dy: 0.0,
+    };
 
     // background
-    // canvas.set_draw_color(clear_color);
 
     // The game loop
     let mut running = true;
@@ -54,10 +58,25 @@ fn main() -> Result<(), String> {
                 Event::KeyDown {
                     keycode: Some(key), ..
                 } => match key {
-                    Keycode::Up => player.y -= 5,
-                    Keycode::Down => player.y += 5,
-                    Keycode::Left => player.x -= 5,
-                    Keycode::Right => player.x += 5,
+                    Keycode::Left => {
+                        player.a -= 0.2;
+                        player.dx = player.a.cos() * 5.0;
+                        player.dy = player.a.sin() * 5.0;
+                    }
+                    Keycode::Right => {
+                        player.a += 0.2;
+                        player.dx = player.a.cos() * 5.0;
+                        player.dy = player.a.sin() * 5.0;
+                    }
+                    Keycode::Up => {
+                        println!("dx: {}", player.dx);
+                        player.y += player.dy;
+                        player.x += player.dx;
+                    }
+                    Keycode::Down => {
+                        player.y -= player.dy;
+                        player.x -= player.dx;
+                    }
                     _ => {}
                 },
                 _ => {}
