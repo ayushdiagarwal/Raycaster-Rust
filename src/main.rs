@@ -1,11 +1,15 @@
 use sdl2::event::Event;
 use sdl2::pixels::Color;
+use sdl2::rect::Point;
 use sdl2::rect::Rect;
+
+mod view;
+use view::board_view;
 
 fn main() -> Result<(), String> {
     println!("Hello, world!");
 
-    const SCREEN_WIDTH: u32 = 800;
+    const SCREEN_WIDTH: u32 = 600;
     const SCREEN_HEIGHT: u32 = 600;
 
     let sdl_context: sdl2::Sdl = sdl2::init()?;
@@ -20,8 +24,16 @@ fn main() -> Result<(), String> {
 
     let screen_area = Rect::new(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     let clear_color = Color::RGB(64, 192, 255);
-    canvas.set_draw_color(clear_color);
 
+    let board_view: board_view::Renderer = board_view::Renderer {
+        screen_area: screen_area,
+        clear_color: (clear_color),
+    };
+
+    // background
+    // canvas.set_draw_color(clear_color);
+
+    // The game loop
     let mut running = true;
     let mut event_queue = sdl_context.event_pump().unwrap();
 
@@ -31,17 +43,13 @@ fn main() -> Result<(), String> {
                 Event::Quit { .. } => {
                     running = false;
                 }
-                Event::MouseMotion {
-                    x, y, xrel, yrel, ..
-                } => {
-                    println!("Mouse moved: x={}, y={}", x, y);
-                }
 
                 _ => {} // in the default case, do absolutely nothing
             }
         }
 
-        canvas.fill_rect(screen_area).unwrap();
+        // canvas.fill_rect(screen_area).ok().unwrap();
+        board_view.render(&mut canvas);
         canvas.present();
     }
 
