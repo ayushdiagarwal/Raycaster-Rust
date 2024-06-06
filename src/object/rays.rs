@@ -16,7 +16,7 @@ impl Ray {
         // self.rx = player.rx;
 
         // do nothing
-        canvas.set_draw_color(Color::RGB(57, 105, 184));
+        canvas.set_draw_color(Color::RGB(252, 186, 3));
         canvas
             .draw_line(
                 Point::new(self.sx as i32, self.sy as i32),

@@ -56,14 +56,6 @@ fn main() -> Result<(), String> {
         dy: 0.0,
     };
 
-    let mut ray: rays::Ray = rays::Ray {
-        sx: player.x,
-        sy: player.y,
-        ra: player.a, // intialize the ray angle to the player angle
-        rx: 100.0,    // initial value doesn't matter as I'll be changing it in the loop
-        ry: 100.0,
-    };
-
     // background
 
     // The game loop
@@ -113,109 +105,139 @@ fn main() -> Result<(), String> {
             player.a = 2.0 * PI + player.a;
         }
 
-        // at always, I want rays == players stuff (FOR NOW ONLY)
-        ray.ra = player.a;
-        ray.sx = player.x;
-        ray.sy = player.y;
+        // for multiple rays
+        const FOV: f64 = PI / 3.0;
+        const HALF_FOV: f64 = FOV / 2.0;
+        const NUM_RAYS: u32 = SCREEN_WIDTH / 2;
+        const DELTA_ANGLE: f64 = FOV / NUM_RAYS as f64;
 
-        // this is rather a hacky way to do it, but I'll fix it later
+        let mut rays: Vec<rays::Ray> = Vec::new();
 
-        // FOR VERTICAL LINES
-        let map_x = (player.x / 64.0).floor() * 64.0;
-        let mut dx: f64 = 0.0;
-        let mut x_vert: f64 = 0.0;
+        for i in 0..NUM_RAYS {
+            // at always, I want rays == players stuff (FOR NOW ONLY)
 
-        if ray.ra.cos() >= 0.0 {
-            // looking right
-            x_vert = map_x + CELL_WIDTH as f64;
-            dx = CELL_WIDTH as f64;
-        }
-        if ray.ra.cos() < 0.0 {
-            // looking left
-            x_vert = map_x - 0.0001;
-            dx = -64 as f64; //Change this to CELL_WIDTH later
-        }
-
-        // I don't know how this line works
-        // let mut map_y = (player.x - ray.rx) * (ray.ra.tan()) + player.y;
-
-        let mut depth_vert = (x_vert - player.x) / ray.ra.cos();
-        let mut y_vert = player.y + depth_vert * ray.ra.sin();
-
-        let delta_depth = dx / ray.ra.cos();
-        let dy = delta_depth * ray.ra.sin();
-
-        // Now check intersection with map
-
-        let mut dof_v = 0;
-
-        while dof_v < 8 {
-            let mx = (x_vert / 64.0).floor() as usize;
-            let my = (y_vert / 64.0).floor() as usize;
-            // check for boundary conditions
-            if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
-                dof_v = 8;
-            } else {
-                x_vert += dx;
-                y_vert += dy;
-                depth_vert += delta_depth;
-                dof_v += 1;
+            let mut ray: rays::Ray = rays::Ray {
+                sx: player.x,
+                sy: player.y,
+                ra: player.a, // intialize the ray angle to the player angle
+                rx: 100.0,    // initial value doesn't matter as I'll be changing it in the loop
+                ry: 100.0,
+            };
+            ray.ra = player.a - HALF_FOV + 0.0001 + i as f64 * DELTA_ANGLE;
+            // keep angle between 0 and 2PI
+            if ray.ra >= 2.0 * PI {
+                ray.ra -= 2.0 * PI;
             }
-        }
-
-        // For horizontal lines
-        let map_y = (player.y / 64.0).floor() * 64.0;
-        let dy: f64;
-        let mut y_horz: f64;
-
-        if ray.ra < PI {
-            // looking down
-            y_horz = map_y + CELL_WIDTH as f64;
-            dy = CELL_WIDTH as f64;
-        } else {
-            // looking up
-            y_horz = map_y - 0.0001;
-            dy = -64 as f64; //Change this to CELL_WIDTH later
-        }
-
-        let mut depth_horz: f64 = (y_horz - player.y) / ray.ra.sin();
-        let mut x_horz = player.x + depth_horz * ray.ra.cos();
-
-        let delta_depth_hor: f64 = dy / ray.ra.sin();
-        let dx: f64 = delta_depth_hor * ray.ra.cos();
-
-        // now checking for intersection with map
-
-        let mut dof_h = 0;
-
-        while dof_h < 8 {
-            let mx = (x_horz / 64.0).floor() as usize;
-            let my = (y_horz / 64.0).floor() as usize;
-
-            if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
-                dof_h = 8;
-            } else {
-                x_horz += dx;
-                y_horz += dy;
-                depth_horz += delta_depth_hor;
-                dof_h += 1;
+            if ray.ra < 0.0 {
+                ray.ra = 2.0 * PI + ray.ra;
             }
-        }
+            println!("angle: {}", ray.ra);
 
-        // now check which is shorter
+            ray.sx = player.x;
+            ray.sy = player.y;
 
-        if depth_vert < depth_horz {
-            ray.rx = x_vert;
-            ray.ry = y_vert;
-        } else {
-            ray.rx = x_horz;
-            ray.ry = y_horz;
+            // this is rather a hacky way to do it, but I'll fix it later
+
+            // FOR VERTICAL LINES
+            let map_x = (player.x / 64.0).floor() * 64.0;
+            let mut dx: f64 = 0.0;
+            let mut x_vert: f64 = 0.0;
+
+            if ray.ra.cos() >= 0.0 {
+                // looking right
+                x_vert = map_x + CELL_WIDTH as f64;
+                dx = CELL_WIDTH as f64;
+            }
+            if ray.ra.cos() < 0.0 {
+                // looking left
+                x_vert = map_x - 0.0001;
+                dx = -64 as f64; //Change this to CELL_WIDTH later
+            }
+
+            // I don't know how this line works
+            // let mut map_y = (player.x - ray.rx) * (ray.ra.tan()) + player.y;
+
+            let mut depth_vert = (x_vert - player.x) / ray.ra.cos();
+            let mut y_vert = player.y + depth_vert * ray.ra.sin();
+
+            let delta_depth = dx / ray.ra.cos();
+            let dy = delta_depth * ray.ra.sin();
+
+            // Now check intersection with map
+
+            let mut dof_v = 0;
+
+            while dof_v < 8 {
+                let mx = (x_vert / 64.0).floor() as usize;
+                let my = (y_vert / 64.0).floor() as usize;
+                // check for boundary conditions
+                if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
+                    dof_v = 8;
+                } else {
+                    x_vert += dx;
+                    y_vert += dy;
+                    depth_vert += delta_depth;
+                    dof_v += 1;
+                }
+            }
+
+            // For horizontal lines
+            let map_y = (player.y / 64.0).floor() * 64.0;
+            let dy: f64;
+            let mut y_horz: f64;
+
+            if ray.ra < PI {
+                // looking down
+                y_horz = map_y + CELL_WIDTH as f64;
+                dy = CELL_WIDTH as f64;
+            } else {
+                // looking up
+                y_horz = map_y - 0.0001;
+                dy = -64 as f64; //Change this to CELL_WIDTH later
+            }
+
+            let mut depth_horz: f64 = (y_horz - player.y) / ray.ra.sin();
+            let mut x_horz = player.x + depth_horz * ray.ra.cos();
+
+            let delta_depth_hor: f64 = dy / ray.ra.sin();
+            let dx: f64 = delta_depth_hor * ray.ra.cos();
+
+            // now checking for intersection with map
+
+            let mut dof_h = 0;
+
+            while dof_h < 8 {
+                let mx = (x_horz / 64.0).floor() as usize;
+                let my = (y_horz / 64.0).floor() as usize;
+
+                if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
+                    dof_h = 8;
+                } else {
+                    x_horz += dx;
+                    y_horz += dy;
+                    depth_horz += delta_depth_hor;
+                    dof_h += 1;
+                }
+            }
+
+            // now check which is shorter
+
+            if depth_vert < depth_horz {
+                ray.rx = x_vert;
+                ray.ry = y_vert;
+            } else {
+                ray.rx = x_horz;
+                ray.ry = y_horz;
+            }
+            rays.push(ray);
         }
 
         // Print Stuff
         board_view.render(&mut canvas);
+        for ray in &mut rays {
+            ray.draw(&mut canvas)
+        }
         player.draw(&mut canvas);
-        ray.draw(&mut canvas);
         canvas.present();
     }
 
