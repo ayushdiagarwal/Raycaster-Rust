@@ -1,5 +1,4 @@
 use sdl2::pixels::Color;
-use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -18,7 +17,7 @@ impl Player {
         let py = self.y as i32;
         canvas.set_draw_color(Color::RGB(255, 0, 0));
         canvas.fill_rect(Rect::new(px, py, 10, 10)).ok().unwrap();
-        canvas.set_draw_color(Color::RGB(0, 0, 255));
+        canvas.set_draw_color(Color::RGB(245, 180, 114));
         canvas
             .draw_line(
                 (px, py),

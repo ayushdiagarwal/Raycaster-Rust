@@ -8,18 +8,32 @@ use view::board_view;
 
 mod object;
 use object::player;
+use object::rays;
+
+const PI: f64 = 3.14159265358979323846;
+
+// later on, I want this variable to only be in board_view, it's only temp here
+const MAP: [[i32; 8]; 8] = [
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+];
 
 fn main() -> Result<(), String> {
-    println!("Hello, world!");
-
-    const SCREEN_WIDTH: u32 = 600;
-    const SCREEN_HEIGHT: u32 = 600;
+    const CELL_WIDTH: u32 = 64;
+    const SCREEN_WIDTH: u32 = CELL_WIDTH * 8;
+    const SCREEN_HEIGHT: u32 = CELL_WIDTH * 8;
 
     let sdl_context: sdl2::Sdl = sdl2::init()?;
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("RAYTRACER", SCREEN_WIDTH, SCREEN_HEIGHT)
+        .window("RAYCASTER", SCREEN_WIDTH, SCREEN_HEIGHT)
         .build()
         .unwrap();
 
@@ -39,6 +53,14 @@ fn main() -> Result<(), String> {
         a: 0.0,
         dx: 0.0,
         dy: 0.0,
+    };
+
+    let mut ray: rays::Ray = rays::Ray {
+        sx: player.x,
+        sy: player.y,
+        ra: player.a, // intialize the ray angle to the player angle
+        rx: 100.0,    // initial value doesn't matter as I'll be changing it in the loop
+        ry: 100.0,
     };
 
     // background
@@ -69,7 +91,6 @@ fn main() -> Result<(), String> {
                         player.dy = player.a.sin() * 5.0;
                     }
                     Keycode::Up => {
-                        println!("dx: {}", player.dx);
                         player.y += player.dy;
                         player.x += player.dx;
                     }
@@ -83,9 +104,62 @@ fn main() -> Result<(), String> {
             }
         }
 
+        // at always, I want rays == players stuff (FOR NOW ONLY)
+        ray.ra = player.a;
+        ray.sx = player.x;
+        ray.sy = player.y;
+
+        // this is rather a hacky way to do it, but I'll fix it later
+
+        // FOR VERTICAL LINES
+        let mut map_x = (player.x / 64.0) * 64.0;
+        let mut dx: f64 = 0.0;
+
+        if ray.ra.cos() >= 0.0 {
+            // looking right
+            ray.rx = map_x + CELL_WIDTH as f64;
+            dx = CELL_WIDTH as f64;
+        }
+        if ray.ra.cos() < 0.0 {
+            // looking left
+            ray.rx = map_x - 0.0001;
+            dx = -64 as f64; //Change this to CELL_WIDTH later
+        }
+
+        // I don't know how this line works
+        // let mut map_y = (player.x - ray.rx) * (ray.ra.tan()) + player.y;
+
+        let mut depth_vert: f64 = (ray.rx - player.x) / ray.ra.cos();
+        ray.ry = player.y + depth_vert * ray.ra.sin();
+
+        let delta_depth: f64 = dx / ray.ra.cos();
+        let dy: f64 = delta_depth * ray.ra.sin();
+
+        // Now check intersection with map
+
+        let mut dof = 0;
+
+        while dof < 8 {
+            let mx = (ray.rx / 64.0).floor() as usize;
+            let my = (ray.ry / 64.0).floor() as usize;
+
+            println!("my: {}, mx: {}", my, mx);
+
+            // check for boundary conditions
+            if (mx < 8 && my < 8 && mx > 0 && my > 0 && MAP[my][mx] == 1) {
+                dof = 8;
+            } else {
+                ray.rx += dx;
+                ray.ry += dy;
+                depth_vert += delta_depth;
+                dof += 1;
+            }
+        }
+
+        // Print Stuff
         board_view.render(&mut canvas);
-        // player.handle_events(&mut event_queue);
         player.draw(&mut canvas);
+        ray.draw(&mut canvas);
         canvas.present();
     }
 
