@@ -35,7 +35,8 @@ fn main() -> Result<(), String> {
         x: 200.0,
         y: 200.0,
         a: 0.0,
-        dx: 0.0,
+        // at angle 0, it faces exactly right
+        dx: 5.0,
         dy: 0.0,
     };
 
@@ -111,6 +112,7 @@ fn main() -> Result<(), String> {
                     ry: 0.0,
                     ri: i,
                     proj_height: 0.0,
+                    depth: 0.0,
                 };
 
                 rays::Ray::handle_events(&mut ray, &mut player, &mut rays, i);
@@ -122,7 +124,7 @@ fn main() -> Result<(), String> {
         // for which I have absolutely no idea why it happens
 
         // Render Stuff
-        canvas_2d.set_draw_color(Color::RGB(64, 192, 255)); // background color
+        canvas_2d.set_draw_color(Color::RGB(30, 30, 30)); // background color
         canvas_2d
             .fill_rect(Rect::new(0, 0, SCREEN_WIDTH * 2, SCREEN_HEIGHT))
             .ok()

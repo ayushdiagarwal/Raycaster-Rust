@@ -16,6 +16,7 @@ pub struct Ray {
     pub ry: f64,
     pub ri: u32, // ray index
     pub proj_height: f64,
+    pub depth: f64,
 }
 
 impl Ray {
@@ -64,6 +65,7 @@ impl Ray {
             let mx = (x_vert / 64.0).floor() as usize;
             let my = (y_vert / 64.0).floor() as usize;
             // check for boundary conditions
+            #[allow(unused_comparisons)]
             if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
                 dof_v = 8;
             } else {
@@ -103,6 +105,7 @@ impl Ray {
             let mx = (x_horz / 64.0).floor() as usize;
             let my = (y_horz / 64.0).floor() as usize;
 
+            #[allow(unused_comparisons)]
             if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
                 dof_h = 8;
             } else {
@@ -115,7 +118,7 @@ impl Ray {
 
         // Checking which line is closer
 
-        let depth: f64;
+        let mut depth: f64;
 
         if depth_vert < depth_horz {
             self.rx = x_vert;
@@ -127,10 +130,13 @@ impl Ray {
             depth = depth_horz;
         }
 
+        // removing the fishbowl effect
+        depth *= (player.a - self.ra).cos();
+
         let tan_half_fov = (HALF_FOV).tan();
         let screen_dist = HALF_WIDTH as f64 / tan_half_fov;
 
-        let proj_height = CELL_SIZE as f64 * screen_dist / depth;
+        let proj_height = CELL_SIZE as f64 * screen_dist / (depth + 0.00001); // to avoid division by zero
 
         rays.push(Ray {
             sx: self.sx,
@@ -140,8 +146,10 @@ impl Ray {
             ry: self.ry,
             ri: i,
             proj_height: proj_height,
+            depth: depth,
         });
     }
+    #[allow(non_snake_case)]
     pub fn draw_2D(&mut self, canvas: &mut Canvas<Window>) {
         canvas.set_draw_color(Color::RGB(252, 186, 3));
         canvas
@@ -152,8 +160,10 @@ impl Ray {
             .ok()
             .unwrap();
     }
+    #[allow(non_snake_case)]
     pub fn draw_3D(&mut self, canvas: &mut Canvas<Window>) {
-        canvas.set_draw_color(Color::RGB(252, 186, 3));
+        let color = (255.0 / (1.0 + self.depth * 0.002)) as u8;
+        canvas.set_draw_color(Color::RGB(color, color, color));
         canvas
             .fill_rect(Rect::new(
                 (SCREEN_WIDTH + (self.ri * SCALE)) as i32,
