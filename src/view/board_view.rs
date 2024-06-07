@@ -5,21 +5,18 @@ use sdl2::video::Window;
 
 pub struct Renderer {
     pub screen_area: Rect,
-    pub clear_color: Color,
 }
 
-use crate::settings::MAP;
+use crate::settings::*;
 
 impl Renderer {
     pub fn render(&self, canvas: &mut Canvas<Window>) {
         // background
-        canvas.set_draw_color(self.clear_color);
-        canvas.fill_rect(self.screen_area).ok().unwrap();
+        // canvas.set_draw_color(Color::RGB(64, 192, 255));
+        // canvas.fill_rect(self.screen_area).ok().unwrap();
 
         // drawing the grid cubes
         const CELLS: i32 = 8;
-        let cell_width: u32 = (self.screen_area.w / CELLS) as u32;
-        let cell_height: u32 = (self.screen_area.h / CELLS) as u32;
 
         for i in 0..MAP.len() {
             for j in 0..MAP[0].len() {
@@ -28,22 +25,17 @@ impl Renderer {
                 } else {
                     canvas.set_draw_color(Color::RGB(255, 255, 255));
                 }
-                let x = j * (cell_width as usize);
-                let y = i * (cell_height as usize);
-                let cell = Rect::new(
-                    x.try_into().unwrap(),
-                    y.try_into().unwrap(),
-                    cell_width.try_into().unwrap(),
-                    cell_height.try_into().unwrap(),
-                );
+                let x = j * (CELL_SIZE as usize);
+                let y = i * (CELL_SIZE as usize);
+                let cell = Rect::new(x as i32, y as i32, CELL_SIZE as u32, CELL_SIZE as u32);
                 canvas.fill_rect(cell).ok().unwrap();
             }
         }
 
         // drawing the grid outlines
         for i in 0..CELLS {
-            let x = i * (cell_width as i32);
-            let y = i * (cell_height as i32);
+            let x = i * (CELL_SIZE as i32);
+            let y = i * (CELL_SIZE as i32);
             canvas.set_draw_color(Color::RGB(90, 90, 90));
             canvas
                 .draw_line((x, 0), (x, self.screen_area.h))

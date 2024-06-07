@@ -1,5 +1,6 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
+use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
@@ -13,6 +14,8 @@ pub struct Ray {
     pub ra: f64,
     pub rx: f64,
     pub ry: f64,
+    pub ri: u32, // ray index
+    pub proj_height: f64,
 }
 
 impl Ray {
@@ -38,13 +41,13 @@ impl Ray {
 
         if self.ra.cos() >= 0.0 {
             // looking right
-            x_vert = map_x + CELL_WIDTH as f64;
-            dx = CELL_WIDTH as f64;
+            x_vert = map_x + CELL_SIZE as f64;
+            dx = CELL_SIZE as f64;
         }
         if self.ra.cos() < 0.0 {
             // looking left
             x_vert = map_x - 0.0001;
-            dx = -64 as f64; // Change this to CELL_WIDTH later
+            dx = -64 as f64; // Change this to CELL_SIZE later
         }
 
         let mut depth_vert = (x_vert - player.x) / self.ra.cos();
@@ -78,12 +81,12 @@ impl Ray {
 
         if self.ra < PI {
             // looking down
-            y_horz = map_y + CELL_WIDTH as f64;
-            dy = CELL_WIDTH as f64;
+            y_horz = map_y + CELL_SIZE as f64;
+            dy = CELL_SIZE as f64;
         } else {
             // looking up
             y_horz = map_y - 0.0001;
-            dy = -64 as f64; //Change this to CELL_WIDTH later
+            dy = -64 as f64; //Change this to CELL_SIZE later
         }
 
         let mut depth_horz: f64 = (y_horz - player.y) / self.ra.sin();
@@ -112,22 +115,34 @@ impl Ray {
 
         // Checking which line is closer
 
+        let depth: f64;
+
         if depth_vert < depth_horz {
             self.rx = x_vert;
             self.ry = y_vert;
+            depth = depth_vert;
         } else {
             self.rx = x_horz;
             self.ry = y_horz;
+            depth = depth_horz;
         }
+
+        let tan_half_fov = (HALF_FOV).tan();
+        let screen_dist = HALF_WIDTH as f64 / tan_half_fov;
+
+        let proj_height = CELL_SIZE as f64 * screen_dist / depth;
+
         rays.push(Ray {
             sx: self.sx,
             sy: self.sy,
             ra: self.ra,
             rx: self.rx,
             ry: self.ry,
+            ri: i,
+            proj_height: proj_height,
         });
     }
-    pub fn draw(&mut self, canvas: &mut Canvas<Window>) {
+    pub fn draw_2D(&mut self, canvas: &mut Canvas<Window>) {
         canvas.set_draw_color(Color::RGB(252, 186, 3));
         canvas
             .draw_line(
@@ -136,5 +151,18 @@ impl Ray {
             )
             .ok()
             .unwrap();
+    }
+    pub fn draw_3D(&mut self, canvas: &mut Canvas<Window>) {
+        canvas.set_draw_color(Color::RGB(252, 186, 3));
+        canvas
+            .fill_rect(Rect::new(
+                (SCREEN_WIDTH + (self.ri * SCALE)) as i32,
+                (HALF_HEIGHT as f64 - (self.proj_height / 2.0).floor()) as i32,
+                SCALE,
+                self.proj_height as u32,
+            ))
+            .ok()
+            .unwrap();
+        // i, proj_height
     }
 }

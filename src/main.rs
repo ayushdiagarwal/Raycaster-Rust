@@ -18,18 +18,16 @@ fn main() -> Result<(), String> {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("RAYCASTER", SCREEN_WIDTH, SCREEN_HEIGHT)
+        .window("RAYCASTER", SCREEN_WIDTH * 2, SCREEN_HEIGHT)
         .build()
         .unwrap();
 
-    let mut canvas = window.into_canvas().build().unwrap();
+    let mut canvas_2d = window.into_canvas().build().unwrap();
 
     let screen_area = Rect::new(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    let clear_color = Color::RGB(64, 192, 255);
 
     let board_view: board_view::Renderer = board_view::Renderer {
         screen_area, // shorthand intialization
-        clear_color: (clear_color),
     };
 
     // Creating a player's instance
@@ -59,14 +57,14 @@ fn main() -> Result<(), String> {
                 } => match key {
                     Keycode::Left => {
                         player.a -= 0.2;
-                        player.dx = player.a.cos() * 5.0;
-                        player.dy = player.a.sin() * 5.0;
+                        player.dx = player.a.cos() * 10.0;
+                        player.dy = player.a.sin() * 10.0;
                         player_moved = true;
                     }
                     Keycode::Right => {
                         player.a += 0.2;
-                        player.dx = player.a.cos() * 5.0;
-                        player.dy = player.a.sin() * 5.0;
+                        player.dx = player.a.cos() * 10.0;
+                        player.dy = player.a.sin() * 10.0;
                         player_moved = true;
                     }
                     Keycode::Up => {
@@ -111,6 +109,8 @@ fn main() -> Result<(), String> {
                     ra: 0.0,
                     rx: 0.0,
                     ry: 0.0,
+                    ri: i,
+                    proj_height: 0.0,
                 };
 
                 rays::Ray::handle_events(&mut ray, &mut player, &mut rays, i);
@@ -118,13 +118,24 @@ fn main() -> Result<(), String> {
             player_moved = false;
         }
 
+        // the thing wrong here is that if i don't clear the screen with the background color, some pretty nasty stuff happens,
+        // for which I have absolutely no idea why it happens
+
         // Render Stuff
-        board_view.render(&mut canvas);
+        canvas_2d.set_draw_color(Color::RGB(64, 192, 255)); // background color
+        canvas_2d
+            .fill_rect(Rect::new(0, 0, SCREEN_WIDTH * 2, SCREEN_HEIGHT))
+            .ok()
+            .unwrap();
+        board_view.render(&mut canvas_2d);
+
         for ray in &mut rays {
-            ray.draw(&mut canvas)
+            ray.draw_3D(&mut canvas_2d);
+            ray.draw_2D(&mut canvas_2d);
         }
-        player.draw(&mut canvas);
-        canvas.present();
+        player.draw(&mut canvas_2d);
+
+        canvas_2d.present();
     }
 
     Ok(()) // successful execution, doesn't need to return anything, so its empty
