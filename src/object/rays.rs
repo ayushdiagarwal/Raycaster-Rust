@@ -3,19 +3,131 @@ use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
+use crate::object::player::Player;
+
+use crate::settings::*;
+
 pub struct Ray {
-    pub sx: f64,
-    pub sy: f64,
+    pub sx: f64, // starting position which is equal to player's
+    pub sy: f64, // starting y position
     pub ra: f64,
     pub rx: f64,
     pub ry: f64,
 }
 
 impl Ray {
-    pub fn draw(&mut self, canvas: &mut Canvas<Window>) {
-        // self.rx = player.rx;
+    pub fn handle_events(&mut self, player: &mut Player, rays: &mut Vec<Ray>, i: u32) {
+        // adding small amount so it doesn't equal to zero
+        self.ra = player.a - HALF_FOV + 0.0001 + i as f64 * DELTA_ANGLE;
+        // keeps angle between 0 and 2PI
+        if self.ra >= 2.0 * PI {
+            self.ra -= 2.0 * PI;
+        }
+        if self.ra < 0.0 {
+            self.ra = 2.0 * PI + self.ra;
+        }
 
-        // do nothing
+        // starting position of ray is player's position
+        self.sx = player.x;
+        self.sy = player.y;
+
+        // FOR VERTICAL LINES
+        let map_x = (player.x / 64.0).floor() * 64.0;
+        let mut dx: f64 = 0.0;
+        let mut x_vert: f64 = 0.0;
+
+        if self.ra.cos() >= 0.0 {
+            // looking right
+            x_vert = map_x + CELL_WIDTH as f64;
+            dx = CELL_WIDTH as f64;
+        }
+        if self.ra.cos() < 0.0 {
+            // looking left
+            x_vert = map_x - 0.0001;
+            dx = -64 as f64; // Change this to CELL_WIDTH later
+        }
+
+        let mut depth_vert = (x_vert - player.x) / self.ra.cos();
+        let mut y_vert = player.y + depth_vert * self.ra.sin();
+
+        let delta_depth = dx / self.ra.cos();
+        let dy = delta_depth * self.ra.sin();
+
+        // Checking intersection with map
+
+        let mut dof_v = 0;
+
+        while dof_v < 8 {
+            let mx = (x_vert / 64.0).floor() as usize;
+            let my = (y_vert / 64.0).floor() as usize;
+            // check for boundary conditions
+            if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
+                dof_v = 8;
+            } else {
+                x_vert += dx;
+                y_vert += dy;
+                depth_vert += delta_depth;
+                dof_v += 1;
+            }
+        }
+
+        // FOR HORIZONTAL LINES
+        let map_y = (player.y / 64.0).floor() * 64.0;
+        let dy: f64;
+        let mut y_horz: f64;
+
+        if self.ra < PI {
+            // looking down
+            y_horz = map_y + CELL_WIDTH as f64;
+            dy = CELL_WIDTH as f64;
+        } else {
+            // looking up
+            y_horz = map_y - 0.0001;
+            dy = -64 as f64; //Change this to CELL_WIDTH later
+        }
+
+        let mut depth_horz: f64 = (y_horz - player.y) / self.ra.sin();
+        let mut x_horz = player.x + depth_horz * self.ra.cos();
+
+        let delta_depth_hor: f64 = dy / self.ra.sin();
+        let dx: f64 = delta_depth_hor * self.ra.cos();
+
+        // Checking intersection with map
+
+        let mut dof_h = 0;
+
+        while dof_h < 8 {
+            let mx = (x_horz / 64.0).floor() as usize;
+            let my = (y_horz / 64.0).floor() as usize;
+
+            if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
+                dof_h = 8;
+            } else {
+                x_horz += dx;
+                y_horz += dy;
+                depth_horz += delta_depth_hor;
+                dof_h += 1;
+            }
+        }
+
+        // Checking which line is closer
+
+        if depth_vert < depth_horz {
+            self.rx = x_vert;
+            self.ry = y_vert;
+        } else {
+            self.rx = x_horz;
+            self.ry = y_horz;
+        }
+        rays.push(Ray {
+            sx: self.sx,
+            sy: self.sy,
+            ra: self.ra,
+            rx: self.rx,
+            ry: self.ry,
+        });
+    }
+    pub fn draw(&mut self, canvas: &mut Canvas<Window>) {
         canvas.set_draw_color(Color::RGB(252, 186, 3));
         canvas
             .draw_line(

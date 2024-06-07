@@ -8,19 +8,10 @@ pub struct Renderer {
     pub clear_color: Color,
 }
 
+use crate::settings::MAP;
+
 impl Renderer {
     pub fn render(&self, canvas: &mut Canvas<Window>) {
-        let map = [
-            [1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 1, 0, 0, 0, 0, 1],
-            [1, 0, 1, 0, 0, 0, 0, 1],
-            [1, 0, 1, 0, 0, 1, 0, 1],
-            [1, 0, 0, 1, 0, 0, 0, 1],
-            [1, 0, 1, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 1, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1],
-        ];
-
         // background
         canvas.set_draw_color(self.clear_color);
         canvas.fill_rect(self.screen_area).ok().unwrap();
@@ -30,11 +21,9 @@ impl Renderer {
         let cell_width: u32 = (self.screen_area.w / CELLS) as u32;
         let cell_height: u32 = (self.screen_area.h / CELLS) as u32;
 
-        canvas.fill_rect(Rect::new(0, 0, 100, 100)).ok().unwrap();
-
-        for i in 0..map.len() {
-            for j in 0..map[0].len() {
-                if map[i][j] == 1 {
+        for i in 0..MAP.len() {
+            for j in 0..MAP[0].len() {
+                if MAP[i][j] == 1 {
                     canvas.set_draw_color(Color::RGB(0, 0, 0));
                 } else {
                     canvas.set_draw_color(Color::RGB(255, 255, 255));
