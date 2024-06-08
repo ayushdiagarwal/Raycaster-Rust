@@ -7,5 +7,5 @@ This is an implementation of a simple raycaster which translates a 2D array map 
 ## Demo
 
 <p align="center">
-  <img src="Demo/demo.gif" alt="Demo GIF"/>
+  <img src="Demo/demo_gif.gif" alt="Demo GIF"/>
 </p>
