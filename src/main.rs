@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
         .build()
         .unwrap();
 
-    let mut canvas_2d = window.into_canvas().build().unwrap();
+    let mut canvas = window.into_canvas().build().unwrap();
 
     let screen_area = Rect::new(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -47,6 +47,8 @@ fn main() -> Result<(), String> {
     let mut rays: Vec<rays::Ray> = Vec::new();
     let mut player_moved = true;
 
+    let mut keys: [u32; 4] = [0, 0, 0, 0];
+
     while running {
         for event in event_queue.poll_iter() {
             match event {
@@ -57,29 +59,62 @@ fn main() -> Result<(), String> {
                     keycode: Some(key), ..
                 } => match key {
                     Keycode::Left => {
-                        player.a -= 0.2;
-                        player.dx = player.a.cos() * 10.0;
-                        player.dy = player.a.sin() * 10.0;
-                        player_moved = true;
+                        keys[0] = 1;
                     }
                     Keycode::Right => {
-                        player.a += 0.2;
-                        player.dx = player.a.cos() * 10.0;
-                        player.dy = player.a.sin() * 10.0;
-                        player_moved = true;
+                        keys[1] = 1;
                     }
                     Keycode::Up => {
-                        // collision detection
-                        let y1 = ((player.y + player.dy) / 64.0).floor() as usize;
-                        let x1 = ((player.x + player.dx) / 64.0).floor() as usize;
-
-                        if MAP[y1][x1] != 1 {
-                            player.y += player.dy;
-                            player.x += player.dx;
-                            player_moved = true;
-                        }
+                        keys[2] = 1;
                     }
                     Keycode::Down => {
+                        keys[3] = 1;
+                    }
+                    _ => {}
+                },
+                Event::KeyUp {
+                    keycode: Some(key), ..
+                } => match key {
+                    Keycode::Left => {
+                        keys[0] = 0;
+                    }
+                    Keycode::Right => {
+                        keys[1] = 0;
+                    }
+                    Keycode::Up => {
+                        keys[2] = 0;
+                    }
+                    Keycode::Down => {
+                        keys[3] = 0;
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+            let sum_arr: u32 = keys.iter().sum();
+            if sum_arr != 0 {
+                player_moved = true;
+                if keys[0] == 1 {
+                    player.a -= 0.2;
+                    player.dx = player.a.cos() * 10.0;
+                    player.dy = player.a.sin() * 10.0;
+                }
+                if keys[1] == 1 {
+                    player.a += 0.2;
+                    player.dx = player.a.cos() * 10.0;
+                    player.dy = player.a.sin() * 10.0;
+                }
+                if keys[2] == 1 {
+                    // collision detection
+                    let y1 = ((player.y + player.dy) / 64.0).floor() as usize;
+                    let x1 = ((player.x + player.dx) / 64.0).floor() as usize;
+
+                    if MAP[y1][x1] != 1 {
+                        player.y += player.dy;
+                        player.x += player.dx;
+                        player_moved = true;
+                    }
+                    if keys[3] == 1 {
                         // collision detection
                         let y1 = ((player.y - player.dy) / 64.0).floor() as usize;
                         let x1 = ((player.x - player.dx) / 64.0).floor() as usize;
@@ -90,9 +125,7 @@ fn main() -> Result<(), String> {
                             player_moved = true;
                         }
                     }
-                    _ => {}
-                },
-                _ => {}
+                }
             }
         }
 
@@ -124,20 +157,20 @@ fn main() -> Result<(), String> {
         // for which I have absolutely no idea why it happens
 
         // Render Stuff
-        canvas_2d.set_draw_color(Color::RGB(30, 30, 30)); // background color
-        canvas_2d
+        canvas.set_draw_color(Color::RGB(30, 30, 30)); // background color
+        canvas
             .fill_rect(Rect::new(0, 0, SCREEN_WIDTH * 2, SCREEN_HEIGHT))
             .ok()
             .unwrap();
-        board_view.render(&mut canvas_2d);
+        board_view.render(&mut canvas);
 
         for ray in &mut rays {
-            ray.draw_3D(&mut canvas_2d);
-            ray.draw_2D(&mut canvas_2d);
+            ray.draw_3D(&mut canvas);
+            ray.draw_2D(&mut canvas);
         }
-        player.draw(&mut canvas_2d);
+        player.draw(&mut canvas);
 
-        canvas_2d.present();
+        canvas.present();
     }
 
     Ok(()) // successful execution, doesn't need to return anything, so its empty

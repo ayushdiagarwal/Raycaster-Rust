@@ -10,6 +10,7 @@ pub const HALF_FOV: f64 = FOV / 2.0;
 pub const NUM_RAYS: u32 = SCREEN_WIDTH / 2;
 pub const DELTA_ANGLE: f64 = FOV / NUM_RAYS as f64;
 pub const SCALE: u32 = SCREEN_WIDTH / NUM_RAYS;
+// Since number of rays is half of the screen_width, scale makes sure that entire screen is covered by the rays
 
 pub const MAP: [[i32; 8]; 8] = [
     [1, 1, 1, 1, 1, 1, 1, 1],

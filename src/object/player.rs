@@ -33,12 +33,7 @@ impl Player {
 }
 
 // found this on the web lol
-fn draw_circle(
-    canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-    cx: i32,
-    cy: i32,
-    radius: i32,
-) {
+fn draw_circle(canvas: &mut sdl2::render::Canvas<Window>, cx: i32, cy: i32, radius: i32) {
     let mut x = radius;
     let mut y = 0;
     let mut err = 0;

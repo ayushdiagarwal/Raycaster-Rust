@@ -8,6 +8,7 @@ use crate::object::player::Player;
 
 use crate::settings::*;
 
+// is there a way to lower the amount of parameters?
 pub struct Ray {
     pub sx: f64, // starting position which is equal to player's
     pub sy: f64, // starting y position
@@ -23,6 +24,7 @@ impl Ray {
     pub fn handle_events(&mut self, player: &mut Player, rays: &mut Vec<Ray>, i: u32) {
         // adding small amount so it doesn't equal to zero
         self.ra = player.a - HALF_FOV + 0.0001 + i as f64 * DELTA_ANGLE;
+
         // keeps angle between 0 and 2PI
         if self.ra >= 2.0 * PI {
             self.ra -= 2.0 * PI;
@@ -131,7 +133,7 @@ impl Ray {
         }
 
         // removing the fishbowl effect
-        depth *= (player.a - self.ra).cos();
+        depth *= (player.a - self.ra).cos(); // getting the distance between player and wall
 
         let tan_half_fov = (HALF_FOV).tan();
         let screen_dist = HALF_WIDTH as f64 / tan_half_fov;
@@ -145,8 +147,9 @@ impl Ray {
             rx: self.rx,
             ry: self.ry,
             ri: i,
-            proj_height: proj_height,
-            depth: depth,
+            // shorthand intialization
+            proj_height,
+            depth,
         });
     }
     #[allow(non_snake_case)]
@@ -162,17 +165,16 @@ impl Ray {
     }
     #[allow(non_snake_case)]
     pub fn draw_3D(&mut self, canvas: &mut Canvas<Window>) {
-        let color = (255.0 / (1.0 + self.depth * 0.002)) as u8;
+        let color = (255.0 / (1.0 + self.depth * 0.006)) as u8;
         canvas.set_draw_color(Color::RGB(color, color, color));
         canvas
             .fill_rect(Rect::new(
-                (SCREEN_WIDTH + (self.ri * SCALE)) as i32,
-                (HALF_HEIGHT as f64 - (self.proj_height / 2.0).floor()) as i32,
-                SCALE,
+                (SCREEN_WIDTH + (self.ri * SCALE)) as i32, // x coordinate
+                (HALF_HEIGHT as f64 - (self.proj_height / 2.0).floor()) as i32, // y coordinate
+                SCALE,                                     // width of each ray
                 self.proj_height as u32,
             ))
             .ok()
             .unwrap();
-        // i, proj_height
     }
 }
