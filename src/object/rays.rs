@@ -38,19 +38,19 @@ impl Ray {
         self.sy = player.y;
 
         // FOR VERTICAL LINES
-        let map_x = (player.x / 64.0).floor() * 64.0;
+        let map_x = (player.x / CELL_SIZE).floor() * CELL_SIZE;
         let mut dx: f64 = 0.0;
         let mut x_vert: f64 = 0.0;
 
         if self.ra.cos() >= 0.0 {
             // looking right
-            x_vert = map_x + CELL_SIZE as f64;
-            dx = CELL_SIZE as f64;
+            x_vert = map_x + CELL_SIZE;
+            dx = CELL_SIZE;
         }
         if self.ra.cos() < 0.0 {
             // looking left
-            x_vert = map_x - 0.0001;
-            dx = -64 as f64; // Change this to CELL_SIZE later
+            x_vert = map_x - 0.0001; // to go to the left cell
+            dx = -(CELL_SIZE);
         }
 
         let mut depth_vert = (x_vert - player.x) / self.ra.cos();
@@ -64,13 +64,14 @@ impl Ray {
         let mut dof_v = 0;
 
         while dof_v < 8 {
-            let mx = (x_vert / 64.0).floor() as usize;
-            let my = (y_vert / 64.0).floor() as usize;
+            let mx = (x_vert / CELL_SIZE).floor() as usize;
+            let my = (y_vert / CELL_SIZE).floor() as usize;
             // check for boundary conditions
             #[allow(unused_comparisons)]
             if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
-                dof_v = 8;
+                dof_v = 8; // exit
             } else {
+                // go to the next cell
                 x_vert += dx;
                 y_vert += dy;
                 depth_vert += delta_depth;
@@ -79,18 +80,18 @@ impl Ray {
         }
 
         // FOR HORIZONTAL LINES
-        let map_y = (player.y / 64.0).floor() * 64.0;
+        let map_y = (player.y / CELL_SIZE).floor() * CELL_SIZE;
         let dy: f64;
         let mut y_horz: f64;
 
         if self.ra < PI {
             // looking down
-            y_horz = map_y + CELL_SIZE as f64;
-            dy = CELL_SIZE as f64;
+            y_horz = map_y + CELL_SIZE;
+            dy = CELL_SIZE;
         } else {
             // looking up
             y_horz = map_y - 0.0001;
-            dy = -64 as f64; //Change this to CELL_SIZE later
+            dy = -CELL_SIZE;
         }
 
         let mut depth_horz: f64 = (y_horz - player.y) / self.ra.sin();
@@ -104,13 +105,14 @@ impl Ray {
         let mut dof_h = 0;
 
         while dof_h < 8 {
-            let mx = (x_horz / 64.0).floor() as usize;
-            let my = (y_horz / 64.0).floor() as usize;
+            let mx = (x_horz / CELL_SIZE).floor() as usize;
+            let my = (y_horz / CELL_SIZE).floor() as usize;
 
             #[allow(unused_comparisons)]
             if mx < 8 && my < 8 && mx >= 0 && my >= 0 && MAP[my][mx] == 1 {
-                dof_h = 8;
+                dof_h = 8; // exit
             } else {
+                // next cell
                 x_horz += dx;
                 y_horz += dy;
                 depth_horz += delta_depth_hor;
@@ -133,12 +135,12 @@ impl Ray {
         }
 
         // removing the fishbowl effect
-        depth *= (player.a - self.ra).cos(); // getting the distance between player and wall
+        depth *= (player.a - self.ra).cos(); // getting the shortest distance between player and wall
 
         let tan_half_fov = (HALF_FOV).tan();
         let screen_dist = HALF_WIDTH as f64 / tan_half_fov;
 
-        let proj_height = CELL_SIZE as f64 * screen_dist / (depth + 0.00001); // to avoid division by zero
+        let proj_height = CELL_SIZE * screen_dist / (depth + 0.00001); // to avoid division by zero
 
         rays.push(Ray {
             sx: self.sx,
@@ -172,7 +174,7 @@ impl Ray {
                 (SCREEN_WIDTH + (self.ri * SCALE)) as i32, // x coordinate
                 (HALF_HEIGHT as f64 - (self.proj_height / 2.0).floor()) as i32, // y coordinate
                 SCALE,                                     // width of each ray
-                self.proj_height as u32,
+                self.proj_height as u32,                   // proj_height of each ray
             ))
             .ok()
             .unwrap();

@@ -1,6 +1,6 @@
-pub const CELL_SIZE: u32 = 64;
-pub const SCREEN_WIDTH: u32 = CELL_SIZE * 8;
-pub const SCREEN_HEIGHT: u32 = CELL_SIZE * 8;
+pub const CELL_SIZE: f64 = 64.0;
+pub const SCREEN_WIDTH: u32 = CELL_SIZE as u32 * 8;
+pub const SCREEN_HEIGHT: u32 = CELL_SIZE as u32 * 8;
 pub const HALF_WIDTH: u32 = SCREEN_WIDTH / 2;
 pub const HALF_HEIGHT: u32 = SCREEN_HEIGHT / 2;
 

@@ -32,8 +32,8 @@ fn main() -> Result<(), String> {
 
     // Creating a player's instance
     let mut player: player::Player = player::Player {
-        x: 200.0,
-        y: 200.0,
+        x: 300.0,
+        y: 300.0,
         a: 0.0,
         // at angle 0, it faces exactly right
         dx: 5.0,
@@ -106,8 +106,8 @@ fn main() -> Result<(), String> {
                 }
                 if keys[2] == 1 {
                     // collision detection
-                    let y1 = ((player.y + player.dy) / 64.0).floor() as usize;
-                    let x1 = ((player.x + player.dx) / 64.0).floor() as usize;
+                    let y1 = ((player.y + player.dy) / CELL_SIZE).floor() as usize;
+                    let x1 = ((player.x + player.dx) / CELL_SIZE).floor() as usize;
 
                     if MAP[y1][x1] != 1 {
                         player.y += player.dy;
@@ -116,8 +116,8 @@ fn main() -> Result<(), String> {
                     }
                     if keys[3] == 1 {
                         // collision detection
-                        let y1 = ((player.y - player.dy) / 64.0).floor() as usize;
-                        let x1 = ((player.x - player.dx) / 64.0).floor() as usize;
+                        let y1 = ((player.y - player.dy) / CELL_SIZE).floor() as usize;
+                        let x1 = ((player.x - player.dx) / CELL_SIZE).floor() as usize;
 
                         if MAP[y1][x1] != 1 {
                             player.y -= player.dy;
