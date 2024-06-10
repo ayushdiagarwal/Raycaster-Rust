@@ -89,7 +89,7 @@ Now that we have the projected height, we can draw the walls using the following
 
 ```rust
     x = ray * SCALE
-    y = HALF_HEIGHT - proj_height // 2
+    y = HALF_HEIGHT - proj_height / 2
     width = SCALE
     height = proj_height
 ```
